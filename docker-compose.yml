@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - AWS_REGION=local
+      - DYNAMODB_TABLE_PREFIX=uptime_robot_
+      - AWS_ACCESS_KEY_ID=local
+      - AWS_SECRET_ACCESS_KEY=local
+      - CHECK_INTERVAL_MINUTES=1
+    volumes:
+      - ./logs:/usr/src/app/logs
+    depends_on:
+      - dynamodb-local
+    command: >
+      sh -c "node scripts/setupDatabase.js && 
+             node dist/index.js"
+
+  dynamodb-local:
+    image: amazon/dynamodb-local:latest
+    ports:
+      - "8000:8000"
+    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath ./data"
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data
+    working_dir: /home/dynamodblocal
+
+volumes:
+  dynamodb-data:
