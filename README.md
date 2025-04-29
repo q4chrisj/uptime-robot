@@ -44,7 +44,10 @@ uptime-robot/
    ```
    cp .env.example .env
    ```
-4. Set up your AWS credentials in the `.env` file or use AWS CLI profiles
+4. For AWS authentication, ensure the service has access to AWS credentials through one of these methods:
+   - IAM role attached to the instance/container (recommended)
+   - Environment variables (`AWS_` prefixed)
+   - AWS shared credentials file (~/.aws/credentials)
 
 ### Database Setup
 
@@ -94,6 +97,17 @@ This service is designed to run on AWS and uses the following services:
 - **EC2/ECS/Lambda**: For hosting the service
 - **DynamoDB**: For storing sites and check results
 - **CloudWatch**: For monitoring and logging
+- **IAM**: For authentication using role-based access
+
+### IAM Role Authentication
+
+This service uses IAM role-based authentication instead of access keys:
+
+- When running on EC2, assign an IAM role to the instance with appropriate DynamoDB permissions
+- When running on ECS/Fargate, configure a task execution role with DynamoDB permissions
+- When running on Lambda, the Lambda execution role should have the necessary permissions
+
+No AWS access keys need to be configured in the application itself, improving security.
 
 ## Testing
 

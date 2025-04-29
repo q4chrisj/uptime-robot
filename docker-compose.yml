@@ -10,9 +10,9 @@ services:
       - PORT=3000
       - AWS_REGION=local
       - DYNAMODB_TABLE_PREFIX=uptime_robot_
-      - AWS_ACCESS_KEY_ID=local
-      - AWS_SECRET_ACCESS_KEY=local
       - CHECK_INTERVAL_MINUTES=1
+      # For local development with DynamoDB local
+      - AWS_ENDPOINT_URL=http://dynamodb-local:8000
     volumes:
       - ./logs:/usr/src/app/logs
     depends_on:

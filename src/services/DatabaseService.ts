@@ -14,7 +14,7 @@ import {
   QueryCommand,
   QueryCommandInput
 } from '@aws-sdk/lib-dynamodb';
-import { fromEnv } from '@aws-sdk/credential-providers';
+import { fromNodeProviderChain } from '@aws-sdk/credential-providers';
 import { v4 as uuidv4 } from 'uuid';
 import { Site, SiteCheck, SiteStatus, UptimeRange } from '../models/Site';
 import { Logger } from '../utils/Logger';
@@ -29,20 +29,22 @@ export class DatabaseService {
   constructor(
     region: string, 
     tablePrefix: string,
-    logger: Logger,
-    accessKeyId?: string,
-    secretAccessKey?: string
+    logger: Logger
   ) {
-    const clientConfig: DynamoDBClientConfig = { region };
+    const clientConfig: DynamoDBClientConfig = { 
+      region,
+      credentials: fromNodeProviderChain()
+    };
     
-    if (accessKeyId && secretAccessKey) {
+    // If running locally with DynamoDB local
+    const endpoint = process.env.AWS_ENDPOINT_URL;
+    if (endpoint) {
+      clientConfig.endpoint = endpoint;
+      // For local development, we still need some credentials
       clientConfig.credentials = {
-        accessKeyId,
-        secretAccessKey
+        accessKeyId: 'local',
+        secretAccessKey: 'local'
       };
-    } else {
-      // Use the fromEnv credential provider when no explicit credentials are provided
-      clientConfig.credentials = fromEnv();
     }
 
     this.dynamoDbClient = new DynamoDBClient(clientConfig);

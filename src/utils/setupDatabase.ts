@@ -1,11 +1,12 @@
-import { 
-  DynamoDB, 
-  CreateTableCommand, 
+import {
+  DynamoDB,
+  CreateTableCommand,
   ResourceInUseException,
   CreateTableCommandInput,
   KeySchemaElement,
-  AttributeDefinition
+  AttributeDefinition,
 } from "@aws-sdk/client-dynamodb";
+import { fromNodeProviderChain } from "@aws-sdk/credential-providers";
 import dotenv from "dotenv";
 
 // Load environment variables
@@ -13,23 +14,25 @@ dotenv.config();
 
 // Environment variables
 const AWS_REGION = process.env.AWS_REGION || "us-east-1";
-const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
-const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
 const DYNAMODB_TABLE_PREFIX =
   process.env.DYNAMODB_TABLE_PREFIX || "uptime_robot_";
 
 // DynamoDB client configuration
 const options = {
   region: AWS_REGION,
-  ...(AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY
-    ? {
-      credentials: {
-        accessKeyId: AWS_ACCESS_KEY_ID,
-        secretAccessKey: AWS_SECRET_ACCESS_KEY,
-      },
-    }
-    : {}),
+  credentials: fromNodeProviderChain(),
 };
+
+// If running locally with DynamoDB local
+const endpoint = process.env.AWS_ENDPOINT_URL;
+if (endpoint) {
+  // options.endpoint = endpoint;
+  // For local development, we still need some credentials
+  // options.credentials = {
+  // accessKeyId: 'local',
+  // secretAccessKey: 'local'
+  // };
+}
 
 const dynamodb = new DynamoDB(options);
 
@@ -39,11 +42,11 @@ const checksTable = `${DYNAMODB_TABLE_PREFIX}checks`;
 
 async function createSitesTable() {
   const keySchema: KeySchemaElement[] = [
-    { AttributeName: "id", KeyType: "HASH" }
+    { AttributeName: "id", KeyType: "HASH" },
   ];
-  
+
   const attributeDefinitions: AttributeDefinition[] = [
-    { AttributeName: "id", AttributeType: "S" }
+    { AttributeName: "id", AttributeType: "S" },
   ];
 
   const params: CreateTableCommandInput = {
@@ -72,9 +75,9 @@ async function createSitesTable() {
 
 async function createChecksTable() {
   const keySchema: KeySchemaElement[] = [
-    { AttributeName: "id", KeyType: "HASH" }
+    { AttributeName: "id", KeyType: "HASH" },
   ];
-  
+
   const attributeDefinitions: AttributeDefinition[] = [
     { AttributeName: "id", AttributeType: "S" },
     { AttributeName: "siteId", AttributeType: "S" },
