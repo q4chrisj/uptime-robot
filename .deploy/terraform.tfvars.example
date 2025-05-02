@@ -1,0 +1,33 @@
+# AWS Region
+aws_region = "us-east-1"
+
+# Environment
+environment = "dev"
+
+# Application Name
+app_name = "uptime-robot"
+
+# DynamoDB Settings
+dynamodb_table_prefix = "uptime_robot_"
+dynamodb_read_capacity = 5
+dynamodb_write_capacity = 5
+
+# VPC Settings
+create_vpc = true               # Set to false if using an existing VPC
+vpc_cidr = "10.0.0.0/16"
+# vpc_id = "vpc-xxxxxxxx"      # Uncomment and set if using an existing VPC
+# subnet_ids = ["subnet-xxxxxxxx", "subnet-yyyyyyyy"]  # Uncomment and set if using existing subnets
+
+# ECS Settings
+container_cpu = 256             # 1024 = 1 vCPU
+container_memory = 512          # In MiB
+desired_count = 1               # Number of tasks to run
+container_port = 3000           # Port the container listens on
+ecr_repository_name = "uptime-robot"
+
+# Application Settings
+check_interval_minutes = 5
+timeout_ms = 5000
+
+# CloudWatch Logs
+logs_retention_in_days = 30

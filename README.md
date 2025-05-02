@@ -13,6 +13,15 @@ A TypeScript-based web service that monitors website uptime and provides API acc
 
 ```
 uptime-robot/
+├── .deploy/                # Terraform configuration
+│   ├── dynamodb.tf         # DynamoDB tables
+│   ├── ecs.tf              # ECS and container config
+│   ├── iam.tf              # IAM roles and policies
+│   ├── main.tf             # Main Terraform configuration
+│   ├── outputs.tf          # Outputs from Terraform
+│   ├── variables.tf        # Variables for Terraform
+│   ├── vpc.tf              # VPC configuration
+│   └── terraform.tfvars.example # Example variables file
 ├── src/                    # Source code
 │   ├── api/                # API routes and controllers
 │   ├── models/             # Data models and interfaces
@@ -94,9 +103,11 @@ npm start
 
 This service is designed to run on AWS and uses the following services:
 
-- **EC2/ECS/Lambda**: For hosting the service
+- **ECS/Fargate**: For hosting the containerized service
 - **DynamoDB**: For storing sites and check results
+- **ECR**: For storing Docker images
 - **CloudWatch**: For monitoring and logging
+- **Application Load Balancer**: For routing traffic to the service
 - **IAM**: For authentication using role-based access
 
 ### IAM Role Authentication
@@ -119,7 +130,9 @@ npm test
 
 ## Deployment
 
-### To AWS EC2
+### Manual Deployment
+
+#### To AWS EC2
 
 1. Set up an EC2 instance with Node.js
 2. Clone the repository and install dependencies
@@ -130,12 +143,88 @@ npm test
    pm2 start dist/index.js --name "uptime-robot"
    ```
 
-### To AWS ECS/Fargate
+#### To AWS ECS/Fargate using Docker
 
 1. Build a Docker image for the service
-2. Push the image to Amazon ECR
+   ```
+   docker build -t uptime-robot .
+   ```
+2. Push the image to Amazon ECR (after authenticating):
+   ```
+   aws ecr get-login-password | docker login --username AWS --password-stdin <aws_account_id>.dkr.ecr.<region>.amazonaws.com
+   docker tag uptime-robot:latest <aws_account_id>.dkr.ecr.<region>.amazonaws.com/uptime-robot:latest
+   docker push <aws_account_id>.dkr.ecr.<region>.amazonaws.com/uptime-robot:latest
+   ```
 3. Create an ECS task definition and service
 4. Configure environment variables in the task definition
+
+### Automated Deployment with Terraform
+
+The project includes Terraform configuration in the `.deploy` directory to automate the deployment to AWS. This creates all necessary infrastructure including VPC, ECS cluster, DynamoDB tables, and IAM roles.
+
+#### Prerequisites for Terraform Deployment
+
+- Terraform installed (version 1.2.0 or higher)
+- AWS CLI configured with appropriate permissions
+- S3 bucket for Terraform state (optional, but recommended)
+
+#### Terraform Deployment Steps
+
+1. Navigate to the `.deploy` directory:
+   ```
+   cd .deploy
+   ```
+
+2. Create a `terraform.tfvars` file from the example:
+   ```
+   cp terraform.tfvars.example terraform.tfvars
+   ```
+
+3. Edit the `terraform.tfvars` file to customize your deployment.
+
+4. If using S3 backend for state, update the `backend` configuration in `main.tf` with your S3 bucket information.
+
+5. Initialize Terraform:
+   ```
+   terraform init
+   ```
+
+6. Plan your changes:
+   ```
+   terraform plan
+   ```
+
+7. Apply the changes:
+   ```
+   terraform apply
+   ```
+
+8. After successful application, Terraform will output the ALB endpoint and other important information.
+
+#### Terraform Resources Created
+
+The Terraform configuration creates the following resources:
+
+- VPC with public and private subnets (optional, can use existing VPC)
+- ECS Fargate cluster
+- Task definition with appropriate IAM roles
+- ECR repository for Docker images
+- DynamoDB tables for storing site configurations and check results
+- Application Load Balancer for routing traffic
+- CloudWatch Log Group for monitoring
+
+#### Customizing the Deployment
+
+The main variables that can be customized include:
+
+- `aws_region` - AWS region to deploy to
+- `environment` - Environment name (dev, staging, prod)
+- `create_vpc` - Whether to create a new VPC or use existing
+- `vpc_id` and `subnet_ids` - If using existing VPC
+- `container_cpu` and `container_memory` - Container resource allocation
+- `desired_count` - Number of tasks to run
+- `check_interval_minutes` - How often to check websites
+- `timeout_ms` - Timeout for website checks
 
 ## License
 
