@@ -46,6 +46,18 @@ variable "subnet_ids" {
   default     = []
 }
 
+variable "public_subnet_ids" {
+  description = "List of public subnet IDs for the ALB (if different from subnet_ids)"
+  type        = list(string)
+  default     = []
+}
+
+variable "private_subnet_ids" {
+  description = "List of private subnet IDs for ECS tasks (if different from subnet_ids)"
+  type        = list(string)
+  default     = []
+}
+
 variable "create_vpc" {
   description = "Whether to create a new VPC"
   type        = bool

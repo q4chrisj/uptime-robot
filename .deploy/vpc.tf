@@ -3,6 +3,25 @@ locals {
   azs      = slice(data.aws_availability_zones.available.names, 0, local.az_count)
 }
 
+# Data sources for existing VPC resources
+data "aws_vpc" "existing" {
+  count = var.create_vpc ? 0 : 1
+  id    = var.vpc_id
+}
+
+data "aws_subnets" "existing" {
+  count = var.create_vpc ? 0 : 1
+  filter {
+    name   = "vpc-id"
+    values = [var.vpc_id]
+  }
+}
+
+data "aws_subnet" "existing" {
+  for_each = var.create_vpc ? {} : toset(var.subnet_ids)
+  id       = each.key
+}
+
 data "aws_availability_zones" "available" {}
 
 resource "aws_vpc" "main" {

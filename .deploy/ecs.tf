@@ -91,7 +91,7 @@ resource "aws_lb" "app" {
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
-  subnets            = var.create_vpc ? aws_subnet.public[*].id : var.subnet_ids
+  subnets            = var.create_vpc ? aws_subnet.public[*].id : length(var.public_subnet_ids) > 0 ? var.public_subnet_ids : var.subnet_ids
 
   enable_deletion_protection = false
 
@@ -148,9 +148,9 @@ resource "aws_ecs_service" "app" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets          = var.create_vpc ? aws_subnet.private[*].id : var.subnet_ids
+    subnets          = var.create_vpc ? aws_subnet.private[*].id : length(var.private_subnet_ids) > 0 ? var.private_subnet_ids : var.subnet_ids
     security_groups  = [aws_security_group.ecs_tasks.id]
-    assign_public_ip = false
+    assign_public_ip = var.create_vpc ? false : true # May need public IPs in existing VPC
   }
 
   load_balancer {
